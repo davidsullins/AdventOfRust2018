@@ -3,6 +3,7 @@
 
 use lazy_static::*;
 use regex::Regex;
+use std::collections::VecDeque;
 use std::io::Read;
 
 fn main() {
@@ -21,36 +22,43 @@ fn main() {
     );
 }
 
-// part 1
+// part 1 and 2
 // (number of players, last marble value)
 type GameSetup = (usize, u32);
 
 struct GameState {
-    marbles: Vec<u32>,
-    current_pos: usize,
+    marbles: VecDeque<u32>,
     current_val: u32,
 }
 
 impl GameState {
     fn new() -> GameState {
+        let mut marbles = VecDeque::new();
+        marbles.push_back(0);
         GameState {
-            marbles: vec![0],
-            current_pos: 0,
+            marbles,
             current_val: 0,
         }
     }
 
     // place a marble, returning any addition to score
     fn place_marble(&mut self) -> u32 {
-        let count = self.marbles.len();
+        // Convention is that the current marble is at the front
         self.current_val += 1;
         if self.current_val % 23 == 0 {
-            self.current_pos = (self.current_pos + count - 7) % count;
-            self.current_val + self.marbles.remove(self.current_pos)
+            // rotate deque backwards 6 times then remove the 7th marble
+            for _ in 0..6 {
+                let x = self.marbles.pop_back().unwrap();
+                self.marbles.push_front(x);
+            }
+            self.current_val + self.marbles.pop_back().unwrap()
         } else {
-            let next_pos = 1 + (self.current_pos + 1) % count;
-            self.current_pos = next_pos;
-            self.marbles.insert(next_pos, self.current_val);
+            // rotate deque forward twice then add marble
+            for _ in 0..2 {
+                let x = self.marbles.pop_front().unwrap();
+                self.marbles.push_back(x);
+            }
+            self.marbles.push_front(self.current_val);
             0
         }
     }
@@ -58,6 +66,7 @@ impl GameState {
 
 fn find_highest_score(player_count: usize, last_marble_value: u32) -> u32 {
     let mut state = GameState::new();
+    state.marbles.reserve(last_marble_value as usize);
     let mut scores = vec![0; player_count];
     let mut current_player = 0;
 
@@ -99,9 +108,9 @@ fn test_place_marble() {
     }
     assert_eq!(
         vec![
-            0, 16, 8, 17, 4, 18, 19, 2, 24, 20, 25, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15,
+            25, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15, 0, 16, 8, 17, 4, 18, 19, 2, 24, 20,
         ],
-        state.marbles
+        Vec::from(state.marbles)
     );
 }
 
