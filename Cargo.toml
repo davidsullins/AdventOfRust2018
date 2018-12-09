@@ -1,7 +1,10 @@
 [package]
-name = "AdventOfRust2018"
-version = "0.1.0"
 authors = ["David Sullins <david.sullins@gmail.com>"]
 edition = "2018"
+name = "AdventOfRust2018"
+version = "0.1.0"
 
 [dependencies]
+bit-vec = "0.5.0"
+lazy_static = "1.2.0"
+regex = "1.1.0"
